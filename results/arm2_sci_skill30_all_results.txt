@@ -1,0 +1,1 @@
+{"task_name": "scienceworld", "success_rate": 0.6666666666666666, "progress_rate": 0.9195238095238095, "grounding_acc": 0.2895082947292833, "success_rate_hard": 0.5714285714285714, "success_rate_easy": 0.8888888888888888, "progress_rate_hard": 0.900907029478458, "progress_rate_easy": 0.9629629629629629}

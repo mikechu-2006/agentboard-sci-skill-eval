@@ -1,0 +1,74 @@
+# AgentBoard 三任务（alfworld / scienceworld / babyai）本地配置
+# 目标镜像：zzh202121/agentboard:0117（conda env: agentboard, python 3.8.18）
+# 容器内手动用法：
+#   source /root/miniconda3/etc/profile.d/conda.sh && conda activate agentboard
+#   python agentboard/eval_main.py --cfg-path eval_configs/local_3tasks.yaml \
+#          --tasks alfworld scienceworld babyai --model openrouter-cot \
+#          --max_num_steps 30 --log_path /root/agentboard/results/3tasks
+# 或直接用：bash local/scripts/run_agentboard_official.sh [步数] [局数]
+#
+# 注意：这是**模板**。engine（模型 ID）由运行脚本从 local/.env.local 的 MODEL 注入，
+#       生成 eval_configs/local_3tasks_run.yaml 后再跑；其余参数可以直接在本文件里调。
+run:
+  max_num_steps: 30
+  num_exam: 30                # 只对 alfworld 生效；scienceworld/babyai 按 label 全量
+  wandb: False
+  project_name: agentboard-3tasks
+  baseline_dir: ${PROJECT_PATH}/data/baseline_results
+  log_path: ${PROJECT_PATH}/results/3tasks
+
+agent:
+  name: VanillaAgent
+  memory_size: 100
+  need_goal: True
+
+llm:
+  openrouter-cot:
+    # ===== 生成参数在这一段调；模型 ID 请改 local/.env.local 的 MODEL（脚本会注入到 engine）=====
+    name: gpt_logging                # gpt_logging = 本仓库的留痕适配器；走上游 OpenAI 通道用 gpt
+    engine: deepseek-flash      # ← 占位，运行时被 .env.local 的 MODEL 覆盖
+    context_length: 262144
+    use_azure: False
+    temperature: 0.7
+    top_p: 1
+    max_tokens: 3000
+    retry_delays: 5
+    max_retry_iters: 6               # 注意：上游 from_config 会忽略此项，实际固定 5 次
+    stop: "\n"
+    use_parser: True
+    trace_path: /logs/agentboard_skill30_llm_trace.jsonl
+    extra_body:
+      reasoning:
+        enabled: false                # 思维链开关；模型不支持就 false
+    # ===== 改到这里为止 =====
+    # API key / base URL 不写在这里：见 agentbench-local/.env.local（OPENAI_API_KEY / OPENAI_API_BASE）
+
+env:
+  alfworld:
+    name: alfworld
+    base_config: ${PROJECT_PATH}/agentboard/environment/alfworld/base_config.yaml
+    split: eval_out_of_distribution
+    batch_size: 1
+    label_path: ${PROJECT_PATH}/data/alfworld/test.jsonl
+    check_inventory: True
+    check_actions: check valid actions
+    init_prompt_path: ${PROJECT_PATH}/agentboard/prompts/VanillaAgent/alfworld_base_skill.json
+
+  scienceworld:
+    name: scienceworld
+    envStepLimit: 30
+    seed: 0
+    check_inventory: True
+    check_actions: check valid actions
+    init_prompt_path: ${PROJECT_PATH}/agentboard/prompts/VanillaAgent/scienceworld_base.json
+    label_path: ${PROJECT_PATH}/data/scienceworld/test_smoke.jsonl
+
+  babyai:
+    name: babyai
+    seed: 1234
+    game_level: [1, 2, 3, 4, 5, 6, 7]
+    label_path: ${PROJECT_PATH}/data/babyai/test_smoke.jsonl
+    env_num_per_task: 4
+    check_actions: check valid actions
+    check_inventory: inventory
+    init_prompt_path: ${PROJECT_PATH}/agentboard/prompts/VanillaAgent/babyai_vanilla_prompt.json
