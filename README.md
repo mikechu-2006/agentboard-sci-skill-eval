@@ -117,7 +117,7 @@ python3 local/scripts/render_3tasks_report.py --results AgentBoard/results/sci_m
 
 ## 5. 注意事项
 
-1. **三臂并非逐字同条件**：
+1. **上游测试文件修改**：
    - 上游原版Science word经过编辑，差异仅 2 局：
      id=17 的子目标 `",You move to the living room"` 删除了开头的逗号；id=18 的 goal 末句笔误
      `water` 改为 `orange juice`。
